@@ -130,7 +130,7 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
                 this
             }
             if (getDupeChecking() == "enable") {
-                chapters = chapters.distinctBy { it.chapter_number }
+                chapters = chapters.distinctBy { it.chapter_number }.sortedByDescending { it.chapter_number }
             }
             return chapters
         }
