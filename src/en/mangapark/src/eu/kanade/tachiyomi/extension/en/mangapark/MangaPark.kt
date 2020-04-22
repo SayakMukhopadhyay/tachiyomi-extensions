@@ -124,14 +124,15 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
 
         fun List<SChapter>.filterOrAll(source: String): List<SChapter>{
             var chapters = this.filter { it.scanlator!!.contains(source) }
-            if (getDupeChecking() == "enable") {
-                chapters = chapters.distinctBy { it.chapter_number }
-            }
-            return if (chapters.isNotEmpty()) {
+            chapters = if (chapters.isNotEmpty()) {
                 (chapters + chapters.getMissingChapters(this)).sortedByDescending { it.chapter_number }
             } else {
                 this
             }
+            if (getDupeChecking() == "enable") {
+                chapters = chapters.distinctBy { it.chapter_number }
+            }
+            return chapters
         }
 
         val mangaBySource = response.asJsoup().select("div[id^=stream]").map { sourceElement ->
