@@ -123,7 +123,10 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
         }
 
         fun List<SChapter>.filterOrAll(source: String): List<SChapter>{
-            val chapters = this.filter { it.scanlator!!.contains(source) }
+            var chapters = this.filter { it.scanlator!!.contains(source) }
+            if (getDupeChecking() == "enable") {
+                chapters = chapters.distinctBy { it.chapter_number }
+            }
             return if (chapters.isNotEmpty()) {
                 (chapters + chapters.getMissingChapters(this)).sortedByDescending { it.chapter_number }
             } else {
@@ -484,7 +487,22 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
                 preferences.edit().putString(SOURCE_PREF, entry).commit()
             }
         }
+        val dupeCheckPref = androidx.preference.ListPreference(screen.context).apply {
+            key = DUPE_CHECK_TITLE
+            title = DUPE_CHECK_TITLE
+            entries = arrayOf("Enable", "Disable")
+            entryValues = arrayOf("enable", "disable")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = this.findIndexOfValue(selected)
+                val entry = entryValues.get(index) as String
+                preferences.edit().putString(DUPE_CHECK, entry).commit()
+            }
+        }
         screen.addPreference(myPref)
+        screen.addPreference(dupeCheckPref)
     }
 
     override fun setupPreferenceScreen(screen: PreferenceScreen) {
@@ -502,13 +520,31 @@ class MangaPark : ConfigurableSource, ParsedHttpSource() {
                 preferences.edit().putString(SOURCE_PREF, entry).commit()
             }
         }
+        val dupeCheckPref = ListPreference(screen.context).apply {
+            key = DUPE_CHECK_TITLE
+            title = DUPE_CHECK_TITLE
+            entries = arrayOf("Enable", "Disable")
+            entryValues = arrayOf("enable", "disable")
+            summary = "%s"
+
+            setOnPreferenceChangeListener { _, newValue ->
+                val selected = newValue as String
+                val index = this.findIndexOfValue(selected)
+                val entry = entryValues.get(index) as String
+                preferences.edit().putString(DUPE_CHECK, entry).commit()
+            }
+        }
         screen.addPreference(myPref)
+        screen.addPreference(dupeCheckPref)
     }
     private fun getSourcePref(): String? = preferences.getString(SOURCE_PREF, "all")
+    private fun getDupeChecking(): String? = preferences.getString(DUPE_CHECK, "disable")
 
     companion object {
         private const val SOURCE_PREF_TITLE = "Chapter List Source"
         private const val SOURCE_PREF = "Manga_Park_Source"
+        private const val DUPE_CHECK_TITLE = "Enable Dupe Checking"
+        private const val DUPE_CHECK = "Enable_Dupe_Checking"
         private val sourceArray = arrayOf(
             Pair("All sources, all chapters","all"),
             Pair("Source with most chapters","most"),
